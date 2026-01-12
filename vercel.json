@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "azu_api.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.12"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "azu_api.py"
+    }
+  ],
+  "env": {
+    "AZURE_ORG": "@azure_org",
+    "AZURE_PROJECT": "@azure_project",
+    "AZURE_TEAM": "@azure_team"
+  }
+}
