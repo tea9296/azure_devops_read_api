@@ -7,7 +7,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import os
 from dotenv import load_dotenv
-import pytz
+from zoneinfo import ZoneInfo
 import re
 
 # 載入環境變數
@@ -23,7 +23,7 @@ app = FastAPI(
 ORG = os.getenv("AZURE_ORG")
 PROJECT = os.getenv("AZURE_PROJECT")
 TEAM = os.getenv("AZURE_TEAM", PROJECT)
-TIMEZONE = pytz.timezone('Asia/Taipei')
+TIMEZONE = ZoneInfo('Asia/Taipei')
 
 
 class Comment(BaseModel):
