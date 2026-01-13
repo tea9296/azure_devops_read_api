@@ -34,6 +34,7 @@ curl -H "Authorization: Bearer YOUR_PAT" \
   https://your-api-url.vercel.app/sprints
 ```
 
+
 ### 範例 2: 查詢 Sprint 37 的工作項目
 
 ```bash
