@@ -15,10 +15,5 @@
       "src": "/(.*)",
       "dest": "azu_api.py"
     }
-  ],
-  "env": {
-    "AZURE_ORG": "@azure_org",
-    "AZURE_PROJECT": "@azure_project",
-    "AZURE_TEAM": "@azure_team"
-  }
+  ]
 }
