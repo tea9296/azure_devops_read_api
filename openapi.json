@@ -1,0 +1,123 @@
+{
+  "info": {
+    "description": "Azure DevOps Work Items API - 查詢指定 Sprint 中我建立的或指派給我的工作項目。需要使用者提供自己的 Azure DevOps Personal Access Token (PAT) 進行驗證。",
+    "title": "Azure DevOps Work Items API",
+    "version": "2.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/sprints": {
+      "get": {
+        "description": "列出所有可用的 Sprints，包含名稱、路徑、開始與結束日期、以及時間範圍（past/current/future）。",
+        "operationId": "listSprints",
+        "parameters": [
+          {
+            "description": "Azure DevOps Personal Access Token，格式為 'Bearer YOUR_PAT'。",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "const": "Bearer {auth}",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功回應，回傳所有可用的 Sprints 列表。"
+          },
+          "401": {
+            "description": "未授權，缺少或無效的 Authorization header。"
+          }
+        }
+      }
+    },
+    "/work-items": {
+      "get": {
+        "description": "查詢指定 Sprint 中我建立的或指派給我的 work items，回傳完整詳細資訊，包含 ID、標題、狀態、類型、負責人、建立者、描述、標籤、留言等。",
+        "operationId": "getWorkItems",
+        "parameters": [
+          {
+            "description": "Azure DevOps Personal Access Token，格式為 'Bearer YOUR_PAT'。",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "const": "Bearer {auth}",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sprint 名稱，例如 'Sprint 37'、'Sprint 38'。",
+            "in": "query",
+            "name": "sprint",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功回應，回傳該 Sprint 中所有相關 work items 的完整資訊。"
+          },
+          "401": {
+            "description": "未授權，缺少或無效的 Authorization header。"
+          }
+        }
+      }
+    },
+    "/work-items/summary": {
+      "get": {
+        "description": "取得指定 Sprint 的 work items 簡化摘要，只包含 title、description（若有）、comments（若有）。此格式適合 LLM 處理，用於產生 Sprint 報告或總結。",
+        "operationId": "getWorkItemsSummary",
+        "parameters": [
+          {
+            "description": "Azure DevOps Personal Access Token，格式為 'Bearer YOUR_PAT'。",
+            "in": "header",
+            "name": "Authorization",
+            "required": true,
+            "schema": {
+              "const": "Bearer {auth}",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sprint 名稱，例如 'Sprint 37'、'Sprint 38'。",
+            "in": "query",
+            "name": "sprint",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功回應，回傳簡化的 work items 摘要，包含 sprint 名稱、總數、以及每個 item 的 title、description、comments。"
+          },
+          "401": {
+            "description": "未授權，缺少或無效的 Authorization header。"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "健康檢查端點，用於確認 API 服務是否正常運作。不需要驗證。",
+        "operationId": "healthCheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功回應，回傳 status 和 timestamp。"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "{url}"
+    }
+  ]
+}
