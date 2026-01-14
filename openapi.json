@@ -34,7 +34,7 @@
     },
     "/work-items": {
       "get": {
-        "description": "查詢指定 Sprint 中我建立的或指派給我的 work items，回傳完整詳細資訊，包含 ID、標題、狀態、類型、負責人、建立者、描述、標籤、留言等。",
+        "description": "查詢指定 Sprint 中指定使用者建立的或指派給該使用者的 work items，回傳完整詳細資訊，包含 ID、標題、狀態、類型、負責人、建立者、描述、標籤、留言等。",
         "operationId": "getWorkItems",
         "parameters": [
           {
@@ -55,14 +55,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "要查詢的使用者名稱，例如 'Stanley Chang'。",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "成功回應，回傳該 Sprint 中所有相關 work items 的完整資訊。"
+            "description": "成功回應，回傳該 Sprint 中指定使用者相關 work items 的完整資訊。"
           },
           "401": {
             "description": "未授權，缺少或無效的 Authorization header。"
+          },
+          "404": {
+            "description": "找不到，當指定的使用者名稱在該 Sprint 中沒有 work items 時回傳。"
           }
         }
       }
@@ -90,14 +102,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "要查詢的使用者名稱，例如 'Stanley Chang'。",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "成功回應，回傳簡化的 work items 摘要，包含 sprint 名稱、總數、以及每個 item 的 title、description、comments。"
+            "description": "成功回應，回傳簡化的 work items 摘要，包含 sprint 名稱、查詢的使用者、總數、以及每個 item 的 title、description、comments。"
           },
           "401": {
             "description": "未授權，缺少或無效的 Authorization header。"
+          },
+          "404": {
+            "description": "找不到，當指定的使用者名稱在該 Sprint 中沒有 work items 時回傳。"
           }
         }
       }

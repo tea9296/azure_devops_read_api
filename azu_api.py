@@ -90,13 +90,14 @@ def get_comments_for_item(item_id: int, pat: str) -> List[dict]:
     return comments
 
 
-def get_work_items_by_sprint(sprint: str, pat: str) -> dict:
+def get_work_items_by_sprint(sprint: str, pat: str, user_name: Optional[str] = None) -> dict:
     """
     根據指定 Sprint 查詢 Azure DevOps work items
     
     Args:
         sprint: Sprint 名稱，例如 "Sprint 37"
         pat: 使用者的 Azure DevOps Personal Access Token
+        user_name: 要查詢的使用者名稱，若不指定則查詢自己 (@Me)
     
     Returns:
         包含 work items 的字典
@@ -114,19 +115,25 @@ def get_work_items_by_sprint(sprint: str, pat: str) -> dict:
         )
     
     try:
-        # 使用 WIQL 查詢指定 Sprint 中我建立的或指派給我的 work items
+        # 使用 WIQL 查詢指定 Sprint 中指定使用者建立的或指派給該使用者的 work items
         # IterationPath 需要使用 UNDER 運算符（包含子路徑）
         wiql_url = f"https://dev.azure.com/{ORG}/{PROJECT}/_apis/wit/wiql?api-version=7.1"
         
         # 組合完整的 Iteration Path
         iteration_path = f"{PROJECT}\\{sprint}"
         
+        # 如果有指定 user_name，用名稱查詢；否則用 @Me
+        if user_name:
+            user_condition = f"([System.AssignedTo] CONTAINS '{user_name}')" #[System.CreatedBy] CONTAINS '{user_name}' OR 
+        else:
+            user_condition = "([System.AssignedTo] = @Me)"
+        
         query = {
             "query": (
                 "SELECT [System.Id] "
                 "FROM WorkItems "
                 f"WHERE [System.IterationPath] UNDER '{iteration_path}' "
-                "AND ([System.CreatedBy] = @Me OR [System.AssignedTo] = @Me) "
+                f"AND {user_condition} "
                 "ORDER BY [System.ChangedDate] DESC"
             )
         }
@@ -146,8 +153,16 @@ def get_work_items_by_sprint(sprint: str, pat: str) -> dict:
         work_items_result = response.json().get('workItems', [])
         
         if not work_items_result:
+            # 如果有指定 user_name 但找不到結果，回傳錯誤
+            if user_name:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"在 {sprint} 中找不到使用者 '{user_name}' 的 work items。請確認名稱是否正確。"
+                )
+            # 如果是查詢自己（@Me）但沒有結果，正常回傳空結果
             return {
                 "sprint": sprint,
+                "queried_user": "@Me",
                 "total_count": 0,
                 "created_by_me": 0,
                 "assigned_to_me": 0,
@@ -223,6 +238,7 @@ def get_work_items_by_sprint(sprint: str, pat: str) -> dict:
         
         return {
             "sprint": sprint,
+            "queried_user": user_name if user_name else "@Me",
             "total_count": len(work_items),
             "created_by_me": created_by_me_count,
             "assigned_to_me": assigned_to_me_count,
@@ -330,12 +346,18 @@ async def get_work_items(
         description="Sprint 名稱，例如 'Sprint 37'",
         examples=["Sprint 37"]
     ),
+    name: Optional[str] = Query(
+        None,
+        description="要查詢的使用者名稱，例如 'Stanley Chang'。若不指定則查詢自己。",
+        examples=["Stanley Chang"]
+    ),
     authorization: Optional[str] = Header(None, description="Bearer YOUR_AZURE_DEVOPS_PAT")
 ):
     """
-    查詢指定 Sprint 中我建立的或指派給我的 work items
+    查詢指定 Sprint 中指定使用者建立的或指派給該使用者的 work items
     
     - **sprint**: Sprint 名稱（必填）
+    - **name**: 使用者名稱（選填，不填則查詢自己）
     - **authorization**: Authorization header with Bearer token
     """
     # 從 Authorization header 提取 PAT
@@ -346,7 +368,7 @@ async def get_work_items(
         )
     
     pat = authorization.replace("Bearer ", "").strip()
-    result = get_work_items_by_sprint(sprint, pat)
+    result = get_work_items_by_sprint(sprint, pat, name)
     return JSONResponse(content=result)
 
 
@@ -357,12 +379,18 @@ async def get_work_items_summary(
         description="Sprint 名稱，例如 'Sprint 37'",
         examples=["Sprint 37"]
     ),
+    name: Optional[str] = Query(
+        None,
+        description="要查詢的使用者名稱，例如 'Stanley Chang'。若不指定則查詢自己。",
+        examples=["Stanley Chang"]
+    ),
     authorization: Optional[str] = Header(None, description="Bearer YOUR_AZURE_DEVOPS_PAT")
 ):
     """
     取得指定 Sprint 的 work items 摘要（適合 LLM 使用）
     
     - **sprint**: Sprint 名稱（必填）
+    - **name**: 使用者名稱（選填，不填則查詢自己）
     - **authorization**: Authorization header with Bearer token
     """
     # 從 Authorization header 提取 PAT
@@ -374,7 +402,7 @@ async def get_work_items_summary(
     
     pat = authorization.replace("Bearer ", "").strip()
     
-    result = get_work_items_by_sprint(sprint, pat)
+    result = get_work_items_by_sprint(sprint, pat, name)
     
     # 整理成簡潔的格式：只有 title、description、comments
     summary_items = []
@@ -396,6 +424,7 @@ async def get_work_items_summary(
     
     return {
         "sprint": result['sprint'],
+        "queried_user": result['queried_user'],
         "total_count": result['total_count'],
         "items": summary_items
     }
